@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan make:middleware:*)",
+      "Bash(php artisan make:migration:*)",
+      "Bash(php artisan make:seeder:*)",
+      "Bash(php artisan make:command:*)",
+      "Bash(php artisan:*)",
+      "Bash(copy .env.example .env)",
+      "Bash(php:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(redis-server:*)",
+      "Bash(composer:*)",
+      "Bash(curl:*)",
+      "Bash(del \"C:\\projects\\cline\\rmsaas\\database\\migrations\\2025_08_31_051219_add_status_fields_to_tenants_table.php\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
