@@ -13,7 +13,8 @@
       "Bash(redis-server:*)",
       "Bash(composer:*)",
       "Bash(curl:*)",
-      "Bash(del \"C:\\projects\\cline\\rmsaas\\database\\migrations\\2025_08_31_051219_add_status_fields_to_tenants_table.php\")"
+      "Bash(del \"C:\\projects\\cline\\rmsaas\\database\\migrations\\2025_08_31_051219_add_status_fields_to_tenants_table.php\")",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

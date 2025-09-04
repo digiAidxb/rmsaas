@@ -21,6 +21,13 @@ Route::get('/', function () {
     }
     
     if (auth('tenant')->check()) {
+        // Check if user needs onboarding
+        // Don't show onboarding if data was just cleared
+        $skipOnboarding = $tenant && ($tenant->onboarding_completed_at || $tenant->skip_onboarding);
+        
+        if ($tenant && !$skipOnboarding) {
+            return redirect()->route('onboarding.index');
+        }
         return redirect()->route('dashboard');
     }
     
@@ -65,6 +72,11 @@ Route::get('/auto-login/{token}', function($token) {
         // Login the user
         auth('tenant')->login($user);
         
+        // Check if user needs onboarding
+        if (!$tenant->onboarding_completed_at && !$tenant->skip_onboarding) {
+            return redirect()->route('onboarding.index');
+        }
+        
         // Redirect to dashboard
         return redirect()->route('dashboard');
         
@@ -73,19 +85,7 @@ Route::get('/auto-login/{token}', function($token) {
     }
 })->name('tenant.auto.login');
 
-Route::get('/dashboard', function () {
-    $tenant = \Spatie\Multitenancy\Models\Tenant::current();
-    
-    // Check if onboarding is needed
-    if (!$tenant->onboarding_completed_at && !$tenant->skip_onboarding) {
-        return redirect()->route('onboarding.index');
-    }
-    
-    return Inertia::render('Dashboard', [
-        'tenant' => $tenant,
-        'onboarding_progress' => $tenant->getOnboardingProgress()
-    ]);
-})->middleware(['auth:tenant', 'verified'])->name('dashboard');
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->middleware(['auth:tenant', 'verified'])->name('dashboard');
 
 // Onboarding routes
 Route::middleware('auth:tenant')->prefix('onboarding')->group(function () {
@@ -93,9 +93,38 @@ Route::middleware('auth:tenant')->prefix('onboarding')->group(function () {
     Route::get('/step/{step}', [OnboardingController::class, 'step'])->name('onboarding.step');
     Route::post('/step/{step}/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
     Route::post('/skip', [OnboardingController::class, 'skip'])->name('onboarding.skip');
+    
+    // Revolutionary Import Integration
+    Route::get('/import', [OnboardingController::class, 'importStep'])->name('onboarding.import');
+    Route::post('/import/quick-setup', [OnboardingController::class, 'quickImportSetup'])->name('onboarding.import.quick');
 });
 
 Route::middleware('auth:tenant')->group(function () {
+    // Import System Routes - Revolutionary AI-Powered Import Center
+    Route::prefix('imports')->name('imports.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Tenant\ImportController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Tenant\ImportController::class, 'create'])->name('create');
+        Route::post('/upload', [App\Http\Controllers\Tenant\ImportController::class, 'store'])->name('store');
+        Route::post('/preview', [App\Http\Controllers\Tenant\ImportController::class, 'preview'])->name('preview');
+        Route::post('/clear-data', [App\Http\Controllers\Tenant\ImportController::class, 'clearData'])->name('clear-data');
+        Route::get('/mapping', [App\Http\Controllers\Tenant\ImportController::class, 'mapping'])->name('mapping');
+        Route::get('/validation', [App\Http\Controllers\Tenant\ImportController::class, 'validation'])->name('validation');
+        Route::get('/progress', [App\Http\Controllers\Tenant\ImportController::class, 'progressView'])->name('progress');
+        Route::get('/summary', [App\Http\Controllers\Tenant\ImportController::class, 'summary'])->name('summary');
+        Route::get('/{id}', [App\Http\Controllers\Tenant\ImportController::class, 'show'])->name('show');
+        Route::get('/{id}/progress', [App\Http\Controllers\Tenant\ImportController::class, 'getProgress'])->name('progress.show');
+    });
+    
+    // Analytics Routes - AI Loss Analysis & Profitability
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/losses', [App\Http\Controllers\Tenant\AnalyticsController::class, 'losses'])->name('losses');
+        Route::get('/profits', [App\Http\Controllers\Tenant\AnalyticsController::class, 'profits'])->name('profits');
+        Route::get('/insights', [App\Http\Controllers\Tenant\AnalyticsController::class, 'insights'])->name('insights');
+        Route::get('/profitability', [App\Http\Controllers\Tenant\AnalyticsController::class, 'profitability'])->name('profitability');
+        Route::get('/api/data', [App\Http\Controllers\Tenant\AnalyticsController::class, 'apiData'])->name('api.data');
+        Route::post('/reports', [App\Http\Controllers\Tenant\AnalyticsController::class, 'generateReport'])->name('reports.generate');
+    });
+    
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

@@ -1,5 +1,6 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <OnboardingLayout>
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8 rounded-lg">
         <div class="max-w-4xl mx-auto">
             <div class="text-center mb-8">
                 <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
@@ -115,12 +116,14 @@
                 </div>
             </div>
         </div>
-    </div>
+        </div>
+    </OnboardingLayout>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
+import OnboardingLayout from '@/Layouts/OnboardingLayout.vue'
 
 const props = defineProps({
     tenant: Object,

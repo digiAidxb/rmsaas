@@ -1,5 +1,6 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <OnboardingLayout>
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8 rounded-lg">
         <div class="max-w-4xl mx-auto">
             <!-- Progress Header -->
             <div class="mb-8">
@@ -33,10 +34,33 @@
                 <!-- Content -->
                 <div class="p-8">
                     <div class="mb-8">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Choose Your Import Method</h2>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Data Import Strategy</h2>
                         <p class="text-gray-600 mb-6">
-                            Select how you'd like to set up your system. You can import existing data from your POS system or start fresh with sample data.
+                            For optimal restaurant management, we recommend importing data in the correct sequence. This ensures proper relationships between your menu, inventory, and operations.
                         </p>
+
+                        <!-- Import Sequence -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                            <h3 class="font-semibold text-blue-900 mb-3">📋 Recommended Import Sequence</h3>
+                            <div class="space-y-2 text-sm text-blue-800">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-semibold">1</span>
+                                    <span><strong>Menu & Categories:</strong> Import your menu items with multi-level categories first</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-semibold">2</span>
+                                    <span><strong>Inventory Items:</strong> Import ingredients and supplies for recipe management</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-semibold">3</span>
+                                    <span><strong>Recipes:</strong> Link menu items to inventory ingredients</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-semibold">4</span>
+                                    <span><strong>Sales Data:</strong> Historical sales for analytics and forecasting</span>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Import Options -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -57,12 +81,16 @@
                                         class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500"
                                     />
                                     <div class="flex-1">
-                                        <div class="flex items-center space-x-2 mb-2">
-                                            <span class="text-2xl">📤</span>
+                                        <div class="flex items-center space-x-3 mb-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                                </svg>
+                                            </div>
                                             <h3 class="text-lg font-semibold text-gray-900">Import from POS System</h3>
                                         </div>
                                         <p class="text-gray-600 text-sm mb-4">
-                                            Upload your existing menu items, sales data, and inventory from your current POS system.
+                                            Upload your existing restaurant data following our recommended sequence for optimal system setup.
                                         </p>
                                         <div class="space-y-2 text-sm">
                                             <div class="flex items-center space-x-2 text-green-600">
@@ -105,12 +133,16 @@
                                         class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500"
                                     />
                                     <div class="flex-1">
-                                        <div class="flex items-center space-x-2 mb-2">
-                                            <span class="text-2xl">🎯</span>
-                                            <h3 class="text-lg font-semibold text-gray-900">Start with Sample Data</h3>
+                                        <div class="flex items-center space-x-3 mb-3">
+                                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                </svg>
+                                            </div>
+                                            <h3 class="text-lg font-semibold text-gray-900">Start with Demo Data</h3>
                                         </div>
                                         <p class="text-gray-600 text-sm mb-4">
-                                            Begin with pre-populated sample menu items and data to explore the system features.
+                                            Explore the system with realistic restaurant data including multi-level categories and comprehensive menu structure.
                                         </p>
                                         <div class="space-y-2 text-sm">
                                             <div class="flex items-center space-x-2 text-green-600">
@@ -238,10 +270,12 @@
             </div>
         </div>
     </div>
+    </OnboardingLayout>
 </template>
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3'
+import OnboardingLayout from '@/Layouts/OnboardingLayout.vue'
 
 const props = defineProps({
     tenant: Object,
