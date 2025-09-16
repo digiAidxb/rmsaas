@@ -1,11 +1,11 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <OnboardingLayout>
         <div class="max-w-4xl mx-auto">
             <!-- Progress Header -->
             <div class="mb-8">
                 <div class="flex items-center justify-between mb-4">
-                    <Link 
-                        :href="route('onboarding.index')" 
+                    <Link
+                        :href="route('onboarding.index')"
                         class="text-blue-600 hover:text-blue-500 font-medium flex items-center"
                     >
                         ← Back to Overview
@@ -14,20 +14,20 @@
                         Step {{ stepIndex + 1 }} of {{ totalSteps }}
                     </div>
                 </div>
-                
+
                 <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
-                    <div 
-                        class="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-300"
+                    <div
+                        class="bg-blue-600 h-2 rounded-full transition-all duration-300"
                         :style="{ width: `${((stepIndex + 1) / totalSteps) * 100}%` }"
                     ></div>
                 </div>
             </div>
 
-            <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+            <div class="bg-white border border-gray-200 rounded overflow-hidden">
                 <!-- Header -->
-                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6 text-white">
-                    <h1 class="text-3xl font-bold mb-2">🎉 Welcome to RMSaaS!</h1>
-                    <p class="text-blue-100 text-lg">Your complete restaurant management solution</p>
+                <div class="bg-gray-50 border-b border-gray-200 px-8 py-6">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome to RMSaaS!</h1>
+                    <p class="text-gray-600 text-lg">Your complete restaurant management solution</p>
                 </div>
 
                 <!-- Content -->
@@ -151,11 +151,12 @@
                 </div>
             </div>
         </div>
-    </div>
+    </OnboardingLayout>
 </template>
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3'
+import OnboardingLayout from '@/Layouts/OnboardingLayout.vue'
 
 const props = defineProps({
     tenant: Object,

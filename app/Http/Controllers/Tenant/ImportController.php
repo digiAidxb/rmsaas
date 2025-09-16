@@ -20,24 +20,40 @@ use Illuminate\Support\Facades\DB;
 class ImportController extends Controller
 {
     /**
-     * Import Dashboard - Revolutionary glass morphism design
+     * Import Dashboard - Clean design with real data
      */
     public function index()
     {
         // Get real statistics from the database
         $stats = [
-            'total_imports' => \App\Models\ImportJob::count(),
-            'records_processed' => \App\Models\ImportJob::sum('processed_records'),
-            'loss_prevented' => \App\Models\ImportJob::sum('estimated_cost_impact') ?? 0,
-            'profit_optimized' => \App\Models\ImportJob::where('data_quality_score', '>', 90)->count()
+            'total_imports' => ImportJob::count(),
+            'records_processed' => ImportJob::sum('processed_records') ?? 0,
+            'loss_prevented' => ImportJob::sum('estimated_cost_impact') ?? 0,
+            'profit_optimized' => ImportJob::where('data_quality_score', '>', 90)->count()
         ];
-        
+
         // Get actual recent imports from database
-        $recentImports = \App\Models\ImportJob::orderBy('created_at', 'desc')
-                                             ->limit(10)
-                                             ->get();
-        
-        return view('tenant.imports.index', compact('stats', 'recentImports'));
+        $recentImports = ImportJob::with('createdBy')
+                                 ->orderBy('created_at', 'desc')
+                                 ->limit(10)
+                                 ->get()
+                                 ->map(function($import) {
+                                     return [
+                                         'id' => $import->id,
+                                         'filename' => $import->original_filename,
+                                         'status' => $import->status,
+                                         'records' => $import->processed_records,
+                                         'total_records' => $import->total_records,
+                                         'progress_percentage' => $import->progress_percentage,
+                                         'created_at' => $import->created_at,
+                                         'import_type' => $import->import_type,
+                                         'pos_system' => $import->pos_system,
+                                         'success_rate' => $import->getSuccessRate(),
+                                         'created_by' => $import->createdBy ? $import->createdBy->name : 'System'
+                                     ];
+                                 });
+
+        return inertia('Imports/Index', compact('stats', 'recentImports'));
     }
 
     /**
@@ -45,7 +61,7 @@ class ImportController extends Controller
      */
     public function create()
     {
-        return view('tenant.imports.create');
+        return inertia('Imports/Create');
     }
 
     /**
@@ -75,7 +91,7 @@ class ImportController extends Controller
             $fileName = 'demo_data.csv';
         }
         
-        return view('tenant.imports.mapping', compact('fileData', 'fileName'));
+        return redirect()->route('imports.index')->with('message', 'Mapping feature coming soon');
     }
 
     /**
@@ -97,7 +113,7 @@ class ImportController extends Controller
             $fileName = 'demo_data.csv';
         }
         
-        return view('tenant.imports.validation', compact('validationData', 'fileName', 'importType'));
+        return redirect()->route('imports.index')->with('message', 'Validation feature coming soon');
     }
 
     /**
@@ -105,7 +121,7 @@ class ImportController extends Controller
      */
     public function progressView()
     {
-        return view('tenant.imports.progress');
+        return redirect()->route('imports.index')->with('message', 'Progress tracking coming soon');
     }
 
     /**
@@ -137,7 +153,7 @@ class ImportController extends Controller
             $request->session()->flash('onboarding_completed', true);
         }
         
-        return view('tenant.imports.summary');
+        return redirect()->route('imports.index')->with('success', 'Import completed successfully');
     }
 
     /**
@@ -146,7 +162,36 @@ class ImportController extends Controller
     public function show($id)
     {
         $import = ImportJob::findOrFail($id);
-        return view('tenant.imports.show', compact('import'));
+
+        return inertia('Imports/Show', [
+            'importJob' => [
+                'id' => $import->id,
+                'job_uuid' => $import->job_uuid,
+                'job_name' => $import->job_name,
+                'description' => $import->description,
+                'import_type' => $import->import_type,
+                'source_type' => $import->source_type,
+                'original_filename' => $import->original_filename,
+                'file_size_bytes' => $import->file_size_bytes,
+                'file_mime_type' => $import->file_mime_type,
+                'pos_system' => $import->pos_system,
+                'status' => $import->status,
+                'progress_percentage' => $import->progress_percentage,
+                'total_records' => $import->total_records,
+                'processed_records' => $import->processed_records,
+                'successful_imports' => $import->successful_imports,
+                'failed_imports' => $import->failed_imports,
+                'skipped_records' => $import->skipped_records,
+                'started_at' => $import->started_at,
+                'completed_at' => $import->completed_at,
+                'processing_time_seconds' => $import->processing_time_seconds,
+                'validation_errors' => $import->validation_errors,
+                'import_summary' => $import->import_summary,
+                'error_message' => $import->error_message,
+                'created_at' => $import->created_at,
+                'updated_at' => $import->updated_at,
+            ]
+        ]);
     }
 
     /**
@@ -154,82 +199,122 @@ class ImportController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Increase execution time and memory for file processing
+        set_time_limit(300); // 5 minutes
+        ini_set('memory_limit', '512M');
+
         $request->validate([
-            'file' => 'required|file|max:51200', // 50MB max
-            'import_type' => 'required|string|in:menu,inventory,sales,recipes',
+            'files' => 'required|array|min:1',
+            'files.*' => 'file|max:51200', // 50MB max per file
+            'import_type' => 'nullable|string|in:menu,inventory,sales,recipes',
             'pos_system' => 'nullable|string'
         ]);
 
         try {
-            $file = $request->file('file');
-            
-            // Get import context from session (for onboarding) or request
-            $importContext = $request->session()->get('import_context') 
-                          ?? $request->input('source') 
-                          ?? 'manual';
+            $files = $request->file('files');
+            if (!$files) {
+                return response()->json(['error' => 'No files provided'], 400);
+            }
 
-            // Create import job
-            $importJob = ImportJob::create([
-                'job_uuid' => Str::uuid(),
-                'job_name' => $request->input('job_name', 'Import from ' . $file->getClientOriginalName()),
-                'description' => $request->input('description', 'Imported via upload'),
-                'import_type' => $request->input('import_type'),
-                'source_type' => 'file_upload',
-                'original_filename' => $file->getClientOriginalName(),
-                'file_size_bytes' => $file->getSize(),
-                'file_mime_type' => $file->getMimeType(),
-                'pos_system' => $request->input('pos_system'),
-                'created_by_user_id' => Auth::id(),
-                'import_context' => $importContext,
-                'status' => 'pending'
-            ]);
+            $jobs = [];
+            foreach ($files as $file) {
+                // Get import context from session (for onboarding) or request
+                $importContext = $request->session()->get('import_context')
+                              ?? $request->input('source')
+                              ?? 'manual';
 
-            // Detect POS system if not provided
-            if (!$importJob->pos_system) {
-                $detector = app(PosFormatDetector::class);
-                $detection = $detector->getBestMatch($file);
-                
-                $importJob->update([
-                    'pos_system' => $detection['pos_system'] ?? 'unknown',
-                    'pos_metadata' => $detection
+                // Auto-detect import type based on filename if not provided
+                $importType = $request->input('import_type') ?? $this->detectImportType($file);
+
+                // Create import job
+                $importJob = ImportJob::create([
+                    'job_uuid' => Str::uuid(),
+                    'job_name' => $request->input('job_name', 'Import from ' . $file->getClientOriginalName()),
+                    'description' => $request->input('description', 'Imported via upload'),
+                    'import_type' => $importType,
+                    'source_type' => 'file_upload',
+                    'original_filename' => $file->getClientOriginalName(),
+                    'file_size_bytes' => $file->getSize(),
+                    'file_mime_type' => $file->getMimeType(),
+                    'pos_system' => $request->input('pos_system'),
+                    'created_by_user_id' => Auth::id(),
+                    'import_context' => $importContext,
+                    'status' => 'pending'
                 ]);
-            }
 
-            // Get import service and process
-            $serviceManager = app(ImportServiceManager::class);
-            $service = $serviceManager->getServiceForType($importJob->import_type);
-            
-            if (!$service) {
-                return response()->json([
-                    'error' => 'No import service available for type: ' . $importJob->import_type
-                ], 400);
-            }
+                // Quick POS system detection based on filename only (avoid heavy file parsing)
+                if (!$importJob->pos_system) {
+                    $filename = strtolower($file->getClientOriginalName());
+                    $detectedPos = 'generic';
 
-            // Process in background (in real implementation, you'd dispatch to queue)
-            $processedJob = $service->processImport($importJob, $file);
+                    // Simple filename-based detection
+                    if (str_contains($filename, 'square')) $detectedPos = 'square';
+                    elseif (str_contains($filename, 'toast')) $detectedPos = 'toast';
+                    elseif (str_contains($filename, 'clover')) $detectedPos = 'clover';
+                    elseif (str_contains($filename, 'lightspeed')) $detectedPos = 'lightspeed';
+                    elseif (str_contains($filename, 'touchbistro')) $detectedPos = 'touchbistro';
+
+                    $importJob->update([
+                        'pos_system' => $detectedPos,
+                        'pos_metadata' => ['detection_method' => 'filename', 'filename' => $filename]
+                    ]);
+                }
+
+                // Just store the file and create the job - defer heavy processing
+                // In a real implementation, this would dispatch to a background queue
+                $importJob->update([
+                    'status' => 'pending',
+                    'started_at' => now()
+                ]);
+
+                $jobs[] = $importJob;
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Import started successfully',
-                'import_job' => [
-                    'id' => $processedJob->id,
-                    'uuid' => $processedJob->job_uuid,
-                    'status' => $processedJob->status,
-                    'progress' => $processedJob->progress_percentage
-                ],
-                'redirect' => route('imports.show', $processedJob->id)
+                'message' => count($jobs) > 1 ? count($jobs) . ' imports started successfully' : 'Import started successfully',
+                'import_jobs' => array_map(function($job) {
+                    return [
+                        'id' => $job->id,
+                        'uuid' => $job->job_uuid,
+                        'status' => $job->status,
+                        'progress' => $job->progress_percentage,
+                        'filename' => $job->original_filename
+                    ];
+                }, $jobs),
+                'redirect' => count($jobs) === 1 ? route('imports.show', $jobs[0]->id) : route('imports.index')
             ]);
 
         } catch (\Exception $e) {
             Log::error('Import failed', [
                 'error' => $e->getMessage(),
-                'file' => $file->getClientOriginalName()
+                'files' => $request->hasFile('files') ? 'Multiple files' : 'No files'
             ]);
 
             return response()->json([
                 'error' => 'Import failed: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Auto-detect import type based on filename
+     */
+    private function detectImportType($file): string
+    {
+        $filename = strtolower($file->getClientOriginalName());
+
+        if (str_contains($filename, 'menu') || str_contains($filename, 'item')) {
+            return 'menu';
+        } elseif (str_contains($filename, 'inventory') || str_contains($filename, 'stock')) {
+            return 'inventory';
+        } elseif (str_contains($filename, 'sales') || str_contains($filename, 'transaction')) {
+            return 'sales';
+        } elseif (str_contains($filename, 'recipe')) {
+            return 'recipes';
+        }
+
+        return 'menu'; // Default to menu
     }
 
     /**

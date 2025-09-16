@@ -21,10 +21,38 @@ class ImportServiceProvider extends ServiceProvider
             return new ImportServiceManager();
         });
 
-        // Bind interface implementations - these will be implemented in next steps
+        // Bind interface implementations - dynamic parser selection
         $this->app->bind(FileParserInterface::class, function ($app) {
-            // Will return appropriate parser based on context
+            // Default to CsvParser - will be overridden in factory methods
             return $app->make('App\Services\Import\Parsers\CsvParser');
+        });
+
+        // Register parser factory for dynamic parser selection
+        $this->app->singleton('FileParserFactory', function ($app) {
+            return new class {
+                public function createParser($mimeType, $extension = null) {
+                    $excelMimes = [
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'application/vnd.ms-excel',
+                        'application/vnd.oasis.opendocument.spreadsheet',
+                        'application/excel',
+                        'application/vnd.msexcel'
+                    ];
+
+                    $excelExtensions = ['xlsx', 'xls', 'ods'];
+
+                    if (in_array($mimeType, $excelMimes) || ($extension && in_array(strtolower($extension), $excelExtensions))) {
+                        return app('App\Services\Import\Parsers\ExcelParser');
+                    }
+
+                    if ($mimeType === 'application/json' || ($extension && strtolower($extension) === 'json')) {
+                        return app('App\Services\Import\Parsers\JsonParser');
+                    }
+
+                    // Default to CSV parser
+                    return app('App\Services\Import\Parsers\CsvParser');
+                }
+            };
         });
 
         $this->app->bind(FieldMapperInterface::class, function ($app) {
@@ -52,7 +80,7 @@ class ImportServiceProvider extends ServiceProvider
      */
     protected function registerImportServiceFactories(): void
     {
-        // Menu Import Service
+        // Menu Import Service - only register services that actually exist
         $this->app->bind('import.menu', function ($app) {
             return new \App\Services\Import\Services\MenuImportService(
                 $app->make('App\Services\Import\Parsers\CsvParser'),
@@ -62,52 +90,49 @@ class ImportServiceProvider extends ServiceProvider
             );
         });
 
-        // Inventory Import Service
+        // For other import types, use the generic MenuImportService as fallback
+        // until specific services are implemented
         $this->app->bind('import.inventory', function ($app) {
-            return new \App\Services\Import\InventoryImportService(
+            return new \App\Services\Import\Services\MenuImportService(
                 $app->make('App\Services\Import\Parsers\CsvParser'),
-                $app->make('App\Services\Import\Mappers\InventoryFieldMapper'),
-                $app->make('App\Services\Import\Validators\InventoryValidationEngine'),
+                $app->make('App\Services\Import\Mappers\SmartFieldMapper'),
+                $app->make('App\Services\Import\Validators\ImportValidationEngine'),
                 'inventory'
             );
         });
 
-        // Recipe Import Service
         $this->app->bind('import.recipes', function ($app) {
-            return new \App\Services\Import\RecipeImportService(
+            return new \App\Services\Import\Services\MenuImportService(
                 $app->make('App\Services\Import\Parsers\CsvParser'),
-                $app->make('App\Services\Import\Mappers\RecipeFieldMapper'),
-                $app->make('App\Services\Import\Validators\RecipeValidationEngine'),
+                $app->make('App\Services\Import\Mappers\SmartFieldMapper'),
+                $app->make('App\Services\Import\Validators\ImportValidationEngine'),
                 'recipes'
             );
         });
 
-        // Sales Import Service
         $this->app->bind('import.sales', function ($app) {
-            return new \App\Services\Import\SalesImportService(
+            return new \App\Services\Import\Services\MenuImportService(
                 $app->make('App\Services\Import\Parsers\CsvParser'),
-                $app->make('App\Services\Import\Mappers\SalesFieldMapper'),
-                $app->make('App\Services\Import\Validators\SalesValidationEngine'),
+                $app->make('App\Services\Import\Mappers\SmartFieldMapper'),
+                $app->make('App\Services\Import\Validators\ImportValidationEngine'),
                 'sales'
             );
         });
 
-        // Customer Import Service
         $this->app->bind('import.customers', function ($app) {
-            return new \App\Services\Import\CustomerImportService(
+            return new \App\Services\Import\Services\MenuImportService(
                 $app->make('App\Services\Import\Parsers\CsvParser'),
-                $app->make('App\Services\Import\Mappers\CustomerFieldMapper'),
-                $app->make('App\Services\Import\Validators\CustomerValidationEngine'),
+                $app->make('App\Services\Import\Mappers\SmartFieldMapper'),
+                $app->make('App\Services\Import\Validators\ImportValidationEngine'),
                 'customers'
             );
         });
 
-        // Employee Import Service
         $this->app->bind('import.employees', function ($app) {
-            return new \App\Services\Import\EmployeeImportService(
+            return new \App\Services\Import\Services\MenuImportService(
                 $app->make('App\Services\Import\Parsers\CsvParser'),
-                $app->make('App\Services\Import\Mappers\EmployeeFieldMapper'),
-                $app->make('App\Services\Import\Validators\EmployeeValidationEngine'),
+                $app->make('App\Services\Import\Mappers\SmartFieldMapper'),
+                $app->make('App\Services\Import\Validators\ImportValidationEngine'),
                 'employees'
             );
         });

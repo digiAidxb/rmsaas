@@ -109,7 +109,7 @@ class DashboardController extends Controller
             'potential_monthly_impact' => $aiSavings + $aiProfitIncrease
         ];
         
-        return view('tenant.dashboard', compact('tenant', 'stats', 'recentImports', 'quickActions', 'aiPreview'));
+        return inertia('Dashboard', compact('tenant', 'stats', 'recentImports', 'quickActions', 'aiPreview'));
     }
 
     /**

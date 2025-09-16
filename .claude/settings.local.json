@@ -14,7 +14,17 @@
       "Bash(composer:*)",
       "Bash(curl:*)",
       "Bash(del \"C:\\projects\\cline\\rmsaas\\database\\migrations\\2025_08_31_051219_add_status_fields_to_tenants_table.php\")",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(mysql:*)",
+      "Bash(brew services:*)",
+      "Bash(valet:*)",
+      "Bash(DB_CONNECTION=mysql DB_DATABASE=rmsaas_testpizza php artisan migrate --path=database/migrations/2025_08_31_120254_create_import_jobs_table.php --force)",
+      "Bash(DB_CONNECTION=mysql DB_DATABASE=rmsaas_testpizza php artisan migrate --force)",
+      "Bash(DB_CONNECTION=mysql DB_DATABASE=rmsaas_testpizza php artisan migrate --path=database/migrations/0001_01_01_000000_create_users_table.php --force)",
+      "Bash(DB_CONNECTION=mysql DB_DATABASE=rmsaas_testpizza php artisan migrate --path=database/migrations/2025_08_31_120303_create_import_mappings_table.php --force)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

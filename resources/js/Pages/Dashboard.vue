@@ -6,6 +6,10 @@ import { computed } from 'vue';
 const props = defineProps({
     tenant: Object,
     onboarding_progress: Object,
+    stats: Object,
+    recentImports: Array,
+    quickActions: Array,
+    aiPreview: Object,
 })
 
 const form = useForm({})
@@ -32,10 +36,10 @@ function startOnboarding() {
     window.location.href = route('onboarding.index')
 }
 
-// Mock analytics data for demonstration
-const analyticsData = {
-    dailySales: 2847.50,
-    monthlyRevenue: 78650.00,
+// Analytics data from controller
+const analyticsData = computed(() => ({
+    dailySales: 2847.50, // This could be from stats when available
+    monthlyRevenue: props.stats?.monthly_revenue || 0,
     inventoryValue: 12450.75,
     lowStockItems: 8,
     topSellingItems: [
@@ -43,7 +47,7 @@ const analyticsData = {
         { name: 'Lobster Ravioli', sales: 32, revenue: 1054.40 },
         { name: 'Pan-Seared Salmon', sales: 28, revenue: 838.60 },
     ]
-}
+}))
 </script>
 
 <template>
@@ -73,10 +77,10 @@ const analyticsData = {
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
                 
                 <!-- Onboarding/Setup Actions (if not complete) -->
-                <div v-if="!isOnboardingComplete" class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+                <div v-if="!isOnboardingComplete" class="bg-blue-50 border border-blue-200 rounded p-6">
                     <div class="flex items-start space-x-4">
                         <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded flex items-center justify-center">
                                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                 </svg>
@@ -96,7 +100,7 @@ const analyticsData = {
                             <div class="flex flex-wrap gap-3">
                                 <button
                                     @click="startOnboarding"
-                                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200"
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded transition duration-200"
                                 >
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -107,7 +111,7 @@ const analyticsData = {
                                 <button
                                     v-if="!hasTestData"
                                     @click="seedTestData"
-                                    class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md transition duration-200"
+                                    class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded transition duration-200"
                                 >
                                     🚀 Explore with Demo Data
                                 </button>
@@ -115,7 +119,7 @@ const analyticsData = {
                                 <Link 
                                     v-if="hasTestData"
                                     href="/menu-management" 
-                                    class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition duration-200"
+                                    class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded transition duration-200"
                                 >
                                     📋 View Sample Menu
                                 </Link>
@@ -123,7 +127,7 @@ const analyticsData = {
                                 <Link 
                                     v-if="hasTestData"
                                     href="/inventory" 
-                                    class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-md transition duration-200"
+                                    class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded transition duration-200"
                                 >
                                     📦 Check Inventory
                                 </Link>
@@ -132,69 +136,69 @@ const analyticsData = {
                     </div>
                 </div>
 
-                <!-- Analytics Dashboard (if has test data or is complete) -->
+                <!-- Real Analytics Dashboard (if has test data or is complete) -->
                 <div v-if="hasTestData || isOnboardingComplete">
                     <!-- Key Metrics -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="bg-white overflow-hidden shadow-sm rounded-lg border">
+                        <div class="bg-white overflow-hidden border border-gray-200 rounded">
                             <div class="p-6">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0">
-                                        <div class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
+                                        <div class="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
                                             💰
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-500">Today's Sales</div>
-                                        <div class="text-2xl font-bold text-gray-900">${{ analyticsData.dailySales.toLocaleString() }}</div>
+                                        <div class="text-sm font-medium text-gray-500">Monthly Revenue</div>
+                                        <div class="text-2xl font-bold text-gray-900">AED {{ (stats?.monthly_revenue || 0).toLocaleString() }}</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="bg-white overflow-hidden shadow-sm rounded-lg border">
+
+                        <div class="bg-white overflow-hidden border border-gray-200 rounded">
                             <div class="p-6">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0">
-                                        <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
-                                            📈
+                                        <div class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                            📋
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-500">Monthly Revenue</div>
-                                        <div class="text-2xl font-bold text-gray-900">${{ analyticsData.monthlyRevenue.toLocaleString() }}</div>
+                                        <div class="text-sm font-medium text-gray-500">Menu Items</div>
+                                        <div class="text-2xl font-bold text-gray-900">{{ stats?.total_menu_items || 0 }}</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="bg-white overflow-hidden shadow-sm rounded-lg border">
+
+                        <div class="bg-white overflow-hidden border border-gray-200 rounded">
                             <div class="p-6">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0">
-                                        <div class="w-8 h-8 bg-orange-100 rounded-md flex items-center justify-center">
+                                        <div class="w-8 h-8 bg-orange-100 rounded flex items-center justify-center">
                                             📦
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-500">Inventory Value</div>
-                                        <div class="text-2xl font-bold text-gray-900">${{ analyticsData.inventoryValue.toLocaleString() }}</div>
+                                        <div class="text-sm font-medium text-gray-500">Inventory Items</div>
+                                        <div class="text-2xl font-bold text-gray-900">{{ stats?.inventory_items || 0 }}</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="bg-white overflow-hidden shadow-sm rounded-lg border">
+
+                        <div class="bg-white overflow-hidden border border-gray-200 rounded">
                             <div class="p-6">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0">
-                                        <div class="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center">
-                                            ⚠️
+                                        <div class="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
+                                            📊
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-500">Low Stock Alerts</div>
-                                        <div class="text-2xl font-bold text-gray-900">{{ analyticsData.lowStockItems }}</div>
+                                        <div class="text-sm font-medium text-gray-500">Data Quality</div>
+                                        <div class="text-2xl font-bold text-gray-900">{{ (stats?.data_quality || 0).toFixed(1) }}%</div>
                                     </div>
                                 </div>
                             </div>
@@ -204,7 +208,7 @@ const analyticsData = {
                     <!-- Charts and Analytics -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Top Selling Items -->
-                        <div class="bg-white overflow-hidden shadow-sm rounded-lg border">
+                        <div class="bg-white overflow-hidden border border-gray-200 rounded">
                             <div class="p-6">
                                 <h3 class="text-lg font-medium text-gray-900 mb-4">🏆 Top Selling Items</h3>
                                 <div class="space-y-4">
@@ -227,96 +231,94 @@ const analyticsData = {
                             </div>
                         </div>
 
-                        <!-- AI Insights -->
-                        <div class="bg-white overflow-hidden shadow-sm rounded-lg border">
+                        <!-- AI Insights from Controller -->
+                        <div class="bg-white overflow-hidden border border-gray-200 rounded">
                             <div class="p-6">
                                 <h3 class="text-lg font-medium text-gray-900 mb-4">🤖 AI-Powered Insights</h3>
-                                <div class="space-y-4">
-                                    <div class="p-4 bg-blue-50 rounded-lg">
+                                <div v-if="aiPreview && aiPreview.critical_actions" class="space-y-4">
+                                    <div v-for="(action, index) in aiPreview.critical_actions" :key="index" class="p-4 bg-blue-50 rounded border border-blue-100">
                                         <div class="flex items-start space-x-3">
                                             <div class="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                                             <div>
-                                                <h4 class="font-medium text-gray-900">Revenue Optimization</h4>
-                                                <p class="text-sm text-gray-600 mt-1">Consider increasing Ribeye Steak price by 8% - demand analysis shows low price sensitivity.</p>
+                                                <h4 class="font-medium text-gray-900">AI Recommendation {{ index + 1 }}</h4>
+                                                <p class="text-sm text-gray-600 mt-1">{{ action }}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    <div class="p-4 bg-orange-50 rounded-lg">
-                                        <div class="flex items-start space-x-3">
-                                            <div class="flex-shrink-0 w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-                                            <div>
-                                                <h4 class="font-medium text-gray-900">Inventory Alert</h4>
-                                                <p class="text-sm text-gray-600 mt-1">Fresh Lobster stock critically low. Reorder within 24 hours to avoid menu disruption.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="p-4 bg-green-50 rounded-lg">
+
+                                    <div v-if="aiPreview.potential_monthly_impact" class="p-4 bg-green-50 rounded border border-green-100">
                                         <div class="flex items-start space-x-3">
                                             <div class="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mt-2"></div>
                                             <div>
-                                                <h4 class="font-medium text-gray-900">Cost Reduction</h4>
-                                                <p class="text-sm text-gray-600 mt-1">Switch to Supplier #2 for Basil to reduce costs by 12% while maintaining quality.</p>
+                                                <h4 class="font-medium text-gray-900">Potential Monthly Impact</h4>
+                                                <p class="text-sm text-gray-600 mt-1">AI recommendations could generate AED {{ aiPreview.potential_monthly_impact.toLocaleString() }} additional monthly revenue.</p>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div v-else class="text-center py-8 text-gray-500">
+                                    <div class="text-4xl mb-2">🤖</div>
+                                    <p class="text-sm">AI insights will appear here once you import restaurant data</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
-                <div v-if="isOnboardingComplete || hasTestData" class="bg-white overflow-hidden shadow-sm rounded-lg border">
+                <!-- Quick Actions from Controller -->
+                <div v-if="isOnboardingComplete || hasTestData" class="bg-white overflow-hidden border border-gray-200 rounded">
                     <div class="p-6">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">⚡ Quick Actions</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <Link href="/menu" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition duration-200">
-                                <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-3">
-                                    📋
+                            <Link
+                                v-for="action in quickActions"
+                                :key="action.title"
+                                :href="route(action.route)"
+                                class="flex items-center p-4 border border-gray-200 rounded hover:bg-gray-50 transition duration-200"
+                            >
+                                <div class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center mr-3">
+                                    <span v-if="action.title === 'Import Data'">📤</span>
+                                    <span v-else-if="action.title === 'Loss Management'">📉</span>
+                                    <span v-else-if="action.title === 'Profit Optimization'">🧠</span>
+                                    <span v-else-if="action.title === 'AI Insights'">💡</span>
+                                    <span v-else>📊</span>
                                 </div>
                                 <div>
-                                    <div class="font-medium text-gray-900">Menu Management</div>
-                                    <div class="text-sm text-gray-500">Update menu items</div>
-                                </div>
-                            </Link>
-                            
-                            <Link href="/inventory" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition duration-200">
-                                <div class="w-8 h-8 bg-orange-100 rounded-md flex items-center justify-center mr-3">
-                                    📦
-                                </div>
-                                <div>
-                                    <div class="font-medium text-gray-900">Inventory</div>
-                                    <div class="text-sm text-gray-500">Track stock levels</div>
-                                </div>
-                            </Link>
-                            
-                            <Link href="/orders" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition duration-200">
-                                <div class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center mr-3">
-                                    🧾
-                                </div>
-                                <div>
-                                    <div class="font-medium text-gray-900">Orders</div>
-                                    <div class="text-sm text-gray-500">View recent orders</div>
-                                </div>
-                            </Link>
-                            
-                            <Link href="/analytics" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition duration-200">
-                                <div class="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center mr-3">
-                                    📊
-                                </div>
-                                <div>
-                                    <div class="font-medium text-gray-900">Analytics</div>
-                                    <div class="text-sm text-gray-500">Detailed insights</div>
+                                    <div class="font-medium text-gray-900">{{ action.title }}</div>
+                                    <div class="text-sm text-gray-500">{{ action.description }}</div>
                                 </div>
                             </Link>
                         </div>
                     </div>
                 </div>
 
+                <!-- Recent Imports -->
+                <div v-if="recentImports && recentImports.length > 0" class="bg-white overflow-hidden border border-gray-200 rounded">
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">📋 Recent Import Activity</h3>
+                        <div class="space-y-3">
+                            <div v-for="import_item in recentImports" :key="import_item.id" class="flex items-center p-3 bg-gray-50 rounded border">
+                                <div class="w-8 h-8 rounded flex items-center justify-center mr-3"
+                                     :class="{
+                                         'bg-green-100 text-green-600': import_item.status === 'completed',
+                                         'bg-red-100 text-red-600': import_item.status === 'failed',
+                                         'bg-yellow-100 text-yellow-600': import_item.status === 'processing'
+                                     }">
+                                    <span v-if="import_item.status === 'completed'">✓</span>
+                                    <span v-else-if="import_item.status === 'failed'">✗</span>
+                                    <span v-else>⏳</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-900">{{ import_item.filename || 'Data Import' }}</div>
+                                    <div class="text-sm text-gray-500">{{ import_item.records || 0 }} records • {{ import_item.created_at ? new Date(import_item.created_at).toLocaleDateString() : 'Recently' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Demo Data Notice -->
-                <div v-if="isDemoMode" class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div v-if="isDemoMode" class="bg-purple-50 border border-purple-200 rounded p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <svg class="h-5 w-5 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
